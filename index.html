@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rain Route - Rain-Aware Route Planning Prototype</title>
+  <meta name="description" content="A rain-aware route navigation and waterlogging risk evaluation prototype for science exhibitions. Shortest isn’t always the best during rain." />
+  <meta property="og:title" content="Rain Route - Rain-Aware Route Planning Prototype" />
+  <meta property="og:description" content="A rain-aware route navigation and waterlogging risk evaluation prototype for science exhibitions. Shortest isn’t always the best during rain." />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Link to vanilla CSS -->
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+
+  <!-- Ambient background rainfall animation canvas -->
+  <canvas id="rain-canvas" class="rain-ambience-canvas"></canvas>
+
+  <!-- Educational & Safety Disclaimer Banner -->
+  <div class="safety-banner" id="safety-banner">
+    <div class="container safety-banner-inner">
+      <div class="safety-banner-text">
+        <svg class="safety-banner-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <span>
+          <strong>SAFETY NOTICE:</strong> Rain Route is an educational prototype. Road conditions can change rapidly during severe weather. Never enter dangerous or flooded areas based only on app information.
+        </span>
+      </div>
+      <button class="banner-dismiss" id="dismiss-banner-btn" title="Dismiss notice">✕</button>
+    </div>
+  </div>
+
+  <!-- Header & Navigation -->
+  <header class="app-header">
+    <div class="container header-inner">
+      <div class="brand" onclick="window.location.hash='#home'">
+        <!-- Custom Rain Route SVG Logo -->
+        <svg class="brand-logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cloud-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#38bdf8" />
+              <stop offset="100%" stop-color="#1d4ed8" />
+            </linearGradient>
+            <linearGradient id="road-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#475569" />
+              <stop offset="100%" stop-color="#0f172a" />
+            </linearGradient>
+          </defs>
+          <!-- Stylized Cloud -->
+          <path d="M28 52 C22 52 16 46 16 38 C16 30 22 24 30 24 C33 16 41 12 50 12 C61 12 70 18 73 28 C80 28 86 34 86 42 C86 50 80 54 72 54 Z" fill="url(#cloud-grad)" />
+          <!-- Curving Road Arc -->
+          <path d="M20 90 C35 75 45 68 55 58 C65 48 75 42 85 36" stroke="url(#road-grad)" stroke-width="12" stroke-linecap="round" />
+          <path d="M20 90 C35 75 45 68 55 58 C65 48 75 42 85 36" stroke="#ffffff" stroke-width="2.5" stroke-dasharray="5 7" stroke-linecap="round" />
+          <!-- Animated Rain Drops -->
+          <circle cx="34" cy="64" r="3" fill="#38bdf8" />
+          <circle cx="48" cy="74" r="3" fill="#60a5fa" />
+          <circle cx="62" cy="62" r="3" fill="#38bdf8" />
+          <circle cx="76" cy="70" r="3" fill="#93c5fd" />
+        </svg>
+        <div class="brand-text">
+          <h1>RAIN <span>ROUTE</span></h1>
+          <div class="badge-exhibition">Class 11 Science Exhibition Prototype</div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs" aria-label="Main Navigation">
+        <button class="nav-tab-btn active" data-view="home">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-tab-btn" data-view="map">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
+            <line x1="8" y1="2" x2="8" y2="18"></line>
+            <line x1="16" y1="6" x2="16" y2="22"></line>
+          </svg>
+          <span>Rain Map</span>
+        </button>
+        <button class="nav-tab-btn" data-view="report">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <span>Report Road</span>
+        </button>
+        <button class="nav-tab-btn" data-view="memory">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span>Rain Memory</span>
+        </button>
+        <button class="nav-tab-btn" data-view="how">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span>How It Works</span>
+        </button>
+      </nav>
+
+      <!-- Header Action Pill -->
+      <div class="header-actions">
+        <div class="rain-toggle-pill" id="rain-mode-header-pill" title="Toggle Rain Mode algorithm">
+          🌧 Rain Mode: <span style="color:#64748b;margin-left:4px;">OFF</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Views Container -->
+  <main>
+    <div class="container">
+
+      <!-- ==============================================
+           VIEW 1: HOME & ROUTE PLANNER
+           ============================================== -->
+      <section id="view-home" class="view-section active-view">
+        <!-- Hero Introduction Box -->
+        <div class="hero-box">
+          <div class="hero-tagline-wrap">
+            <div class="hero-badge">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                <line x1="15" y1="9" x2="15.01" y2="9"/>
+              </svg>
+              <span>Class 11 Science & Technology Innovation Exhibit</span>
+            </div>
+            <h2 class="hero-title">RAIN ROUTE</h2>
+            <div class="hero-tagline">“Shortest isn’t always the best during rain.”</div>
+            <p class="hero-desc">
+              Conventional navigation systems route commuters through the shortest physical distance. During heavy rainfall, low-lying roads, choked culverts, and subway dips transform into vehicle-stalling water traps. <strong>Rain Route</strong> dynamically factors water depth and drainage duration to identify the truly optimal path.
+            </p>
+            <div class="hero-actions-row">
+              <button class="btn btn-demo" id="btn-hero-demo">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span>Run Exhibition Demo</span>
+              </button>
+              <button class="btn btn-outline-white" onclick="document.getElementById('route-comparison-anchor').scrollIntoView({behavior: 'smooth'})">
+                <span>View Route Comparison ↓</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Incident & Memory Statistics -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap blue">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-num" id="stat-total-reports">8</div>
+              <div class="stat-label">Total Citizen Reports</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap amber">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-num" id="stat-affected-roads">4</div>
+              <div class="stat-label">Monitored Road Corridors</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap red">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-num" id="stat-high-risk-roads">2</div>
+              <div class="stat-label">High-Risk Flood Dips</div>
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-icon-wrap teal">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+            </div>
+            <div class="stat-info">
+              <div class="stat-num" id="stat-avg-duration">1.8 hrs</div>
+              <div class="stat-label">Avg Waterlogging Duration</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Home Main Grid: Planner & Interactive Map -->
+        <div class="home-layout-grid">
+          <!-- Left Column: Route Planner Controls -->
+          <div class="planner-card">
+            <div class="planner-title-row">
+              <h2>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+                </svg>
+                <span>Route Planner</span>
+              </h2>
+              <span class="demo-chip">Prototype Data</span>
+            </div>
+
+            <!-- Origin Input -->
+            <div class="form-group">
+              <label class="form-label" for="from-location-input">From (Starting Point):</label>
+              <div class="input-with-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <input type="text" id="from-location-input" class="form-input" value="Greenwood School Campus" placeholder="Enter starting location" />
+              </div>
+            </div>
+
+            <!-- Swap Locations Button -->
+            <div class="swap-btn-row">
+              <button class="btn-swap-locations" id="btn-swap-locations" type="button" title="Swap Start and Destination">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Swap Points</span>
+              </button>
+            </div>
+
+            <!-- Destination Input -->
+            <div class="form-group">
+              <label class="form-label" for="to-location-input">To (Destination):</label>
+              <div class="input-with-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <input type="text" id="to-location-input" class="form-input" value="Central Metro Station Hub" placeholder="Enter destination" />
+              </div>
+            </div>
+
+            <!-- Preset Exhibition Routes -->
+            <div class="presets-group">
+              <div class="presets-label">Exhibition Route Presets:</div>
+              <div class="presets-row">
+                <button type="button" class="preset-chip" data-from="Greenwood School Campus" data-to="Central Metro Station Hub">
+                  🏫 Campus → 🚇 Metro Hub
+                </button>
+                <button type="button" class="preset-chip" data-from="City General Hospital" data-to="North Tech Park">
+                  🏥 Hospital → 🏢 Tech Park
+                </button>
+                <button type="button" class="preset-chip" data-from="Green Valley Enclave" data-to="Municipal Market">
+                  🏡 Residential → 🛒 Market
+                </button>
+              </div>
+            </div>
+
+            <!-- Rain Mode Toggle Switch Card -->
+            <div class="rain-mode-toggle-card" id="rain-mode-card">
+              <div class="toggle-inner-row">
+                <div class="toggle-meta">
+                  <h3>
+                    <span>🌧 Rain Mode</span>
+                  </h3>
+                  <p id="rain-mode-status-text">Rain Mode is OFF: Showing fastest baseline routes without rainfall penalties.</p>
+                </div>
+                <label class="switch-control" for="rain-mode-switch">
+                  <input type="checkbox" id="rain-mode-switch" />
+                  <span class="slider-knob"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="planner-actions">
+              <button class="btn btn-primary" id="btn-find-route" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <span>Find Route</span>
+              </button>
+              <button class="btn btn-demo" id="btn-run-demo" type="button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <span>Run Exhibition Demo</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Map Display -->
+          <div class="map-card">
+            <div class="map-header-bar">
+              <div class="map-title">
+                <span>Interactive Urban Waterlogging Map</span>
+                <span class="badge-live">
+                  <span class="pulse-dot"></span>
+                  <span>Simulation Active</span>
+                </span>
+              </div>
+              <div class="map-controls">
+                <button class="map-control-btn" id="btn-toggle-weather" type="button">
+                  🌧 Rain FX: ON
+                </button>
+                <button class="map-control-btn" id="btn-simulate-storm" type="button">
+                  ⚡ Simulate Storm
+                </button>
+                <button class="map-control-btn" id="btn-reset-map-view" type="button">
+                  ⟲ Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- SVG Map Canvas Wrapper -->
+            <div class="svg-map-wrapper">
+              <svg id="interactive-rain-map" class="svg-map-element" viewBox="0 0 600 440" preserveAspectRatio="xMidYMid meet">
+                <!-- Dynamically populated via script.js -->
+              </svg>
+            </div>
+
+            <!-- Legend Bar -->
+            <div class="map-legend-bar">
+              <div class="legend-items">
+                <div class="legend-item">
+                  <span class="legend-swatch blue"></span>
+                  <span>Active Route</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-swatch green"></span>
+                  <span>Low Risk (&lt;4cm)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-swatch yellow"></span>
+                  <span>Moderate Risk (4-8cm)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-swatch red"></span>
+                  <span>High Flood Risk (&gt;10cm)</span>
+                </div>
+              </div>
+              <div class="map-disclaimer">
+                Click any path or hazard node to inspect
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Route Comparison Anchor & Cards Section -->
+        <div class="route-comparison-section" id="route-comparison-anchor">
+          <div class="section-header-row">
+            <h2 class="section-title">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+              <span>Route Evaluation & Cost Analysis</span>
+            </h2>
+            <div class="badge-exhibition">Multi-Criteria Routing Decision Model</div>
+          </div>
+
+          <!-- Active Mode Banner -->
+          <div class="route-mode-banner" id="route-mode-banner-text">
+            <!-- Dynamically populated via script.js -->
+          </div>
+
+          <!-- Cards Grid for Route A, Route B, Route C -->
+          <div class="routes-cards-grid" id="routes-cards-container">
+            <!-- Populated via script.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           VIEW 2: DEDICATED FULL RAIN MAP VIEW
+           ============================================== -->
+      <section id="view-map" class="view-section">
+        <div class="page-intro-header">
+          <h2>Urban Hydro-Topography & Hazard Map</h2>
+          <p>Visualizing road networks against low-lying depressions, culverts, and waterlogging risk zones.</p>
+        </div>
+
+        <div class="map-card" style="margin-bottom: 2rem;">
+          <div class="map-header-bar">
+            <div class="map-title">
+              <span>Full-Spectrum Route Inundation Model</span>
+            </div>
+            <div class="map-controls">
+              <button class="map-control-btn" onclick="window.selectRouteFromMap('route-a')">Focus Route A</button>
+              <button class="map-control-btn" onclick="window.selectRouteFromMap('route-b')">Focus Route B (Ridge)</button>
+              <button class="map-control-btn" onclick="window.selectRouteFromMap('route-c')">Focus Route C</button>
+            </div>
+          </div>
+
+          <div class="svg-map-wrapper" style="height: 540px;">
+            <!-- Mirrored interactive SVG for detailed inspection -->
+            <svg id="interactive-rain-map-full" class="svg-map-element" viewBox="0 0 600 440" preserveAspectRatio="xMidYMid meet">
+              <!-- Rendered identically via script -->
+            </svg>
+          </div>
+
+          <div class="map-legend-bar">
+            <div class="legend-items">
+              <div class="legend-item"><span class="legend-swatch blue"></span> Chosen Navigation Path</div>
+              <div class="legend-item"><span class="legend-swatch green"></span> Route B (Elevated Ridge - 2cm)</div>
+              <div class="legend-item"><span class="legend-swatch yellow"></span> Route C (Causeway Link - 5cm)</div>
+              <div class="legend-item"><span class="legend-swatch red"></span> Route A (Underpass Dip - 12cm)</div>
+            </div>
+            <div class="map-disclaimer">
+              Prototype coordinate model for science exhibition evaluation
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           VIEW 3: REPORT A ROAD CONDITION
+           ============================================== -->
+      <section id="view-report" class="view-section">
+        <div class="report-view-container">
+          <div class="page-intro-header">
+            <h2>Report Road Condition</h2>
+            <p>Help calibrate the dynamic routing model by logging real-world waterlogging depth, duration, and vehicle passability.</p>
+          </div>
+
+          <div class="report-form-card">
+            <form id="report-road-form">
+              <div class="form-grid-2">
+                <!-- Road Selection or Input -->
+                <div class="form-group form-group-full">
+                  <label class="form-label" for="report-road-name">Road / Location Name: *</label>
+                  <input list="road-options" id="report-road-name" class="form-input" placeholder="e.g. Station Underpass Road, Sector 4 Bypass" required style="padding-left: 0.85rem;" />
+                  <datalist id="road-options">
+                    <option value="Station Underpass Road"></option>
+                    <option value="Sector 4 Ridge Parkway"></option>
+                    <option value="Riverbank Causeway Link"></option>
+                    <option value="Central Market Lowlands"></option>
+                    <option value="North Ring Road Subway"></option>
+                    <option value="Greenwood Hospital Approach"></option>
+                  </datalist>
+                </div>
+
+                <!-- Rain Intensity -->
+                <div class="form-group">
+                  <label class="form-label">Current Rain Intensity:</label>
+                  <div class="radio-pills-group">
+                    <div class="radio-pill-item">
+                      <input type="radio" id="rain-light" name="rainIntensity" value="Light" />
+                      <label class="radio-pill-label" for="rain-light">🌦 Light</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="rain-mod" name="rainIntensity" value="Moderate" checked />
+                      <label class="radio-pill-label" for="rain-mod">🌧 Moderate</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="rain-heavy" name="rainIntensity" value="Heavy" />
+                      <label class="radio-pill-label" for="rain-heavy">⛈ Heavy</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Waterlogging Level -->
+                <div class="form-group">
+                  <label class="form-label">Observed Inundation Level:</label>
+                  <div class="radio-pills-group">
+                    <div class="radio-pill-item">
+                      <input type="radio" id="water-none" name="waterlogging" value="None" />
+                      <label class="radio-pill-label" for="water-none">None</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="water-low" name="waterlogging" value="Low" />
+                      <label class="radio-pill-label" for="water-low">Low</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="water-med" name="waterlogging" value="Medium" checked />
+                      <label class="radio-pill-label" for="water-med">Medium</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="water-high" name="waterlogging" value="High" />
+                      <label class="radio-pill-label" for="water-high">High</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Water Depth (cm) -->
+                <div class="form-group">
+                  <label class="form-label" for="report-water-depth">Approximate Water Depth (cm): *</label>
+                  <input type="number" id="report-water-depth" class="form-input" min="0" max="60" value="8" placeholder="e.g. 12" required style="padding-left: 0.85rem;" />
+                  <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; display: block;">Notice: >10 cm stalls small hatchbacks; >15 cm stalls standard SUVs.</span>
+                </div>
+
+                <!-- Waterlogging Duration (min) -->
+                <div class="form-group">
+                  <label class="form-label" for="report-duration">Estimated Waterlogging Duration (minutes): *</label>
+                  <input type="number" id="report-duration" class="form-input" min="0" max="720" value="90" placeholder="e.g. 180" required style="padding-left: 0.85rem;" />
+                  <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; display: block;">Time required for local storm runoff to recede.</span>
+                </div>
+
+                <!-- Road Passability -->
+                <div class="form-group form-group-full">
+                  <label class="form-label">Road Passability Condition:</label>
+                  <div class="radio-pills-group">
+                    <div class="radio-pill-item">
+                      <input type="radio" id="pass-easy" name="passability" value="Easy" />
+                      <label class="radio-pill-label" for="pass-easy">🟢 Easy (Clear traffic)</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="pass-diff" name="passability" value="Difficult" checked />
+                      <label class="radio-pill-label" for="pass-diff">🟡 Difficult (Slow / Partial Lane Blocked)</label>
+                    </div>
+                    <div class="radio-pill-item">
+                      <input type="radio" id="pass-not" name="passability" value="Not passable" />
+                      <label class="radio-pill-label" for="pass-not">🔴 Not Passable (Vehicles Flooded / Stalled)</label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Description -->
+                <div class="form-group form-group-full">
+                  <label class="form-label" for="report-description">Field Observations / Description:</label>
+                  <textarea id="report-description" class="form-textarea" placeholder="e.g. Water collected in subway depression, drainage pump not operating, two cars stalled."></textarea>
+                </div>
+              </div>
+
+              <!-- Form Actions -->
+              <div class="form-actions-row">
+                <div>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-seed-demo-data">
+                    Restore Exhibition Seed Data
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-user-data" style="margin-left: 0.4rem;">
+                    Clear Reports
+                  </button>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-submit-report">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <span>Submit Report</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           VIEW 4: RAIN MEMORY
+           ============================================== -->
+      <section id="view-memory" class="view-section">
+        <div class="memory-view-container">
+          <div class="page-intro-header">
+            <h2>Rain Memory System</h2>
+            <p>Rain Route retains historical logs across rainfall events. Repeatedly waterlogged roads are automatically categorized and weighted so the algorithm proactively avoids chronic flood zones.</p>
+          </div>
+
+          <!-- Memory Filter & Export Toolbar -->
+          <div class="memory-filter-bar">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <label for="memory-risk-filter" style="font-size: 0.85rem; font-weight: 600; color: #475569;">Filter by Severity:</label>
+              <select id="memory-risk-filter" class="form-input" style="width: auto; padding: 0.4rem 0.85rem;">
+                <option value="all">All Monitored Corridors</option>
+                <option value="high">High Risk (Chronic Flooding)</option>
+                <option value="medium">Moderate Risk</option>
+                <option value="low">Safe / Minor Pooling</option>
+              </select>
+            </div>
+            <div>
+              <button class="btn btn-secondary btn-sm" id="btn-export-memory">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                <span>Export JSON Dataset</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cards Grid for Memorized Roads -->
+          <div class="memory-cards-grid" id="memory-cards-grid">
+            <!-- Populated via script.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ==============================================
+           VIEW 5: HOW IT WORKS (SCIENCE EXHIBITION DETAILS)
+           ============================================== -->
+      <section id="view-how" class="view-section">
+        <div class="how-it-works-container">
+          <div class="page-intro-header">
+            <h2>How Rain Route Works</h2>
+            <p>Scientific Methodology, Mathematical Formulation, and Algorithmic Workflow for Class 11 Science Exhibition.</p>
+          </div>
+
+          <!-- Exhibition Hypothesis & Question Card -->
+          <div class="exhibition-research-card">
+            <div class="research-q-block">
+              <h3>Scientific Research Question:</h3>
+              <div class="research-quote">
+                “Can locally collected rain and waterlogging data improve route selection during rainy conditions?”
+              </div>
+            </div>
+
+            <div class="research-q-block">
+              <h3>Scientific Hypothesis:</h3>
+              <div class="research-quote" style="border-left-color: #10b981;">
+                “A route-selection system that considers recent waterlogging information can identify a more practical and safer route than one based only on distance.”
+              </div>
+            </div>
+          </div>
+
+          <!-- Methodological Pipeline Diagram -->
+          <h3 style="font-size: 1.15rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem;">The Algorithmic Workflow Pipeline:</h3>
+          <div class="pipeline-flow">
+            <div class="pipeline-node">OBSERVATION</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node">DATA COLLECTION</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node">CLASSIFICATION</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node active-highlight">RAIN RISK SCORE</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node active-highlight">ROUTE COST</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node">ROUTE COMPARISON</div>
+            <div class="pipeline-arrow">↓</div>
+            <div class="pipeline-node" style="background:#ecfdf5;color:#047857;border-color:#a7f3d0;">RAIN-AWARE ROUTE</div>
+          </div>
+
+          <!-- Scientific Variables Grid -->
+          <div class="variables-grid">
+            <div class="variable-card">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="2" y1="12" x2="22" y2="12"/>
+                </svg>
+                <span>Independent Variable:</span>
+              </h4>
+              <p>
+                Rain conditions along route segments, specifically <strong>water depth (cm)</strong>, <strong>drainage duration (min)</strong>, <strong>rainfall intensity</strong>, and <strong>road passability status</strong>.
+              </p>
+            </div>
+
+            <div class="variable-card">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>Dependent Variable:</span>
+              </h4>
+              <p>
+                The calculated <strong>Rain Risk Score</strong>, the <strong>Rain-Adjusted Route Cost</strong>, and the final selected path recommendation for the traveler.
+              </p>
+            </div>
+
+            <div class="variable-card">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="9" y1="3" x2="9" y2="21"/>
+                </svg>
+                <span>Controlled Variables:</span>
+              </h4>
+              <p>
+                Physical straight-line road distances, baseline dry-weather vehicular travel speeds, and standard topographical layout of the simulated urban grid.
+              </p>
+            </div>
+
+            <div class="variable-card">
+              <h4>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                  <polyline points="2 17 12 22 22 17"/>
+                  <polyline points="2 12 12 17 22 12"/>
+                </svg>
+                <span>Limitations & Future Scope:</span>
+              </h4>
+              <p>
+                Crowdsourced report latency, variable driver clearance heights, and sensor calibration. Future extensions could incorporate IoT ultrasonic water level sensors installed directly inside municipal drains.
+              </p>
+            </div>
+          </div>
+
+          <!-- Mathematical Formulation Card -->
+          <div class="formula-showcase-card">
+            <h3>Mathematical Cost & Risk Formulation</h3>
+            <p style="font-size:0.88rem;color:#cbd5e1;margin-bottom:1rem;">
+              The routing engine shifts from a 1-dimensional metric (distance) to a multi-variable optimization function:
+            </p>
+
+            <div class="math-equation-box">
+              1. Normal Cost = Distance (km) + (Travel Time (min) × 0.25)<br><br>
+              2. Rain Risk Score = Depth Factor (40%) + Duration Factor (30%) + Passability Factor (25%) + Recency (5%)<br><br>
+              3. Rain-Adjusted Cost = Normal Cost + (Risk Score / 100 × 8.0)
+            </div>
+
+            <ul class="formula-explainer-list">
+              <li>• <strong>Rain Mode OFF:</strong> Navigation minimizes <em>Normal Cost</em> → Selects <strong>Route A (2.4 km)</strong>.</li>
+              <li>• <strong>Rain Mode ON:</strong> Navigation minimizes <em>Rain-Adjusted Cost</em> → Selects <strong>Route B (3.0 km)</strong> because its risk penalty is negligible compared to Route A's severe 12 cm flood penalty.</li>
+            </ul>
+          </div>
+
+          <!-- Interactive Sandbox Simulator -->
+          <div class="sandbox-card">
+            <h3>
+              <span>Interactive Algorithm Calculator Sandbox</span>
+            </h3>
+            <p style="font-size:0.85rem;color:#64748b;margin-bottom:1rem;">
+              Adjust the sliders below to see how changes in water depth and drainage duration alter the Rain Risk Score and routing decision in real time:
+            </p>
+
+            <div class="sandbox-controls-grid">
+              <div>
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">
+                  Water Depth: <span id="sandbox-depth-val" style="color:#2563eb;font-weight:700;">8 cm</span>
+                </label>
+                <input type="range" id="sandbox-depth" min="0" max="30" value="8" style="width:100%;cursor:pointer;" />
+              </div>
+
+              <div>
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">
+                  Drainage Duration: <span id="sandbox-duration-val" style="color:#2563eb;font-weight:700;">90 min</span>
+                </label>
+                <input type="range" id="sandbox-duration" min="0" max="240" step="10" value="90" style="width:100%;cursor:pointer;" />
+              </div>
+
+              <div>
+                <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.4rem;">
+                  Simulated Passability:
+                </label>
+                <div style="font-size:0.85rem;color:#334155;padding-top:4px;">
+                  Automatic vehicular threshold
+                </div>
+              </div>
+            </div>
+
+            <div class="sandbox-result-banner">
+              <div class="sandbox-stat-item">
+                <div class="lbl">Calculated Risk Score</div>
+                <div class="val" id="sandbox-score-val">58 / 100</div>
+              </div>
+              <div class="sandbox-stat-item">
+                <div class="lbl">Added Risk Penalty</div>
+                <div class="val" id="sandbox-penalty-val">+4.64 pts</div>
+              </div>
+              <div class="sandbox-stat-item">
+                <div class="lbl">Routing Engine Decision</div>
+                <div class="val" id="sandbox-decision-val">CAUTION</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Prototype Disclaimer Callout -->
+          <div class="disclaimer-box">
+            <strong>Exhibition Disclaimer:</strong> The weights used in this prototype are demonstration assumptions and are not a certified safety score. Road conditions can evolve abruptly during meteorological flash floods.
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Exhibition Demo Step-by-Step Guided Modal -->
+  <div class="modal-backdrop" id="demo-walkthrough-modal">
+    <div class="demo-modal-dialog">
+      <div class="modal-header-row">
+        <div class="modal-title">
+          <span>🌧 Exhibition Demonstration</span>
+        </div>
+        <button class="modal-close-btn" id="demo-modal-close">✕</button>
+      </div>
+
+      <div class="demo-step-badge" id="demo-step-badge">STEP 1 OF 5</div>
+      <h3 id="demo-modal-title" style="font-size: 1.15rem; font-weight: 700; color: #0f172a; margin-bottom: 0.6rem;">Normal Dry-Weather Navigation</h3>
+      <div class="demo-step-content" id="demo-modal-body">
+        <!-- Filled dynamically via script.js -->
+      </div>
+
+      <div class="demo-modal-footer">
+        <button class="btn btn-secondary btn-sm" id="demo-modal-prev-btn" style="visibility: hidden;">
+          ← Previous
+        </button>
+        <button class="btn btn-primary btn-sm" id="demo-modal-next-btn">
+          Next Step →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-notification" id="toast-notification">
+    <span id="toast-msg">Action completed successfully.</span>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="container footer-inner">
+      <div class="footer-notice">
+        <strong>Rain Route Prototype</strong> • Class 11 Science & Technology Exhibition Project<br />
+        <span style="font-style: italic;">“Shortest isn’t always the best during rain.”</span> Built with pure HTML5, CSS3, and vanilla JavaScript. Designed for GitHub Pages compatibility.
+      </div>
+      <div>
+        <span class="badge-exhibition" style="background:#eff6ff;color:#2563eb;">No External APIs Required</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Link to vanilla JavaScript -->
+  <script src="./script.js"></script>
+</body>
+</html>

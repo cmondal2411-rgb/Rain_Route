@@ -1,0 +1,6 @@
+{
+  "name": "Rain Route - Rain-Aware Route Planning Prototype",
+  "description": "A rain-aware route navigation and waterlogging risk evaluation prototype for science exhibitions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
