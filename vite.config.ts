@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/Rain_Route/',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
