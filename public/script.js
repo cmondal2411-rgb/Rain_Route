@@ -746,6 +746,9 @@ dom.presetChips.forEach((chip, index) => {
 
     const selectedRoute = state.allRoutes.find(r => r.id === state.selectedRouteId) || state.allRoutes[0];
 
+const startName = dom.fromInput?.value || "Greenwood";
+const endName = dom.toInput?.value || "Central Metro";
+
     // Build SVG inner elements
     let svgContent = `
       <defs>
@@ -879,7 +882,7 @@ dom.presetChips.forEach((chip, index) => {
         <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle">A</text>
         <!-- Marker Label -->
         <rect x="-60" y="-36" width="120" height="20" rx="4" fill="#0f172a" stroke="#10b981" stroke-width="1" />
-        <text x="0" y="-22" fill="#a7f3d0" font-size="9.5" font-weight="bold" text-anchor="middle">START: Greenwood</text>
+        <text x="0" y="-22" fill="#a7f3d0" font-size="9.5" font-weight="bold" text-anchor="middle">START: ${startName}</text>
       </g>
     `;
 
@@ -894,7 +897,7 @@ dom.presetChips.forEach((chip, index) => {
         <text x="0" y="4" fill="#ffffff" font-size="11" font-weight="900" text-anchor="middle">B</text>
         <!-- Marker Label -->
         <rect x="-65" y="-36" width="130" height="20" rx="4" fill="#0f172a" stroke="#ef4444" stroke-width="1" />
-        <text x="0" y="-22" fill="#fecaca" font-size="9.5" font-weight="bold" text-anchor="middle">DEST: Central Hub</text>
+        <text x="0" y="-22" fill="#fecaca" font-size="9.5" font-weight="bold" text-anchor="middle">DEST: ${endName}</text>
       </g>
     `;
 
