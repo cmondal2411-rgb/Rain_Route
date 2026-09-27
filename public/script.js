@@ -373,15 +373,23 @@ dom.presetChips.forEach((chip, index) => {
 });
 
 
-    // Swap Locations Button
-    if (dom.swapLocationsBtn) {
-      dom.swapLocationsBtn.addEventListener("click", () => {
-        const tmp = dom.fromInput.value;
-        dom.fromInput.value = dom.toInput.value;
-        dom.toInput.value = tmp;
-        showToast("Swapped start and destination points");
-      });
-    }
+   // Swap Locations Button
+if (dom.swapLocationsBtn) {
+  dom.swapLocationsBtn.addEventListener("click", () => {
+    const tmp = dom.fromInput.value;
+    dom.fromInput.value = dom.toInput.value;
+    dom.toInput.value = tmp;
+
+    // Update the route and map labels
+    dom.fromInput.dispatchEvent(new Event("input", { bubbles: true }));
+    dom.toInput.dispatchEvent(new Event("input", { bubbles: true }));
+
+    renderRouteComparison();
+    renderMap();
+
+    showToast(`Swapped: ${dom.fromInput.value} → ${dom.toInput.value}`);
+  });
+}
 
     // Find Route Button
     if (dom.findRouteBtn) {
