@@ -355,9 +355,14 @@ dom.presetChips.forEach((chip, index) => {
   dom.toInput.dispatchEvent(new Event("input", { bubbles: true }));
 
   // Connect each preset to a different exhibition route
-  const presetRouteIds = ["route-a", "route-b", "route-c"];
-  state.selectedRouteId =
-    presetRouteIds[index] || state.allRoutes[0].id;
+  cconst presetRouteIds = [
+  state.rainMode ? "route-b" : "route-a",
+  "route-b",
+  "route-c"
+];
+
+state.selectedRouteId =
+  presetRouteIds[index] || state.allRoutes[0].id;
 
   renderRouteComparison();
   renderMap();
