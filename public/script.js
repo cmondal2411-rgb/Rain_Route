@@ -347,9 +347,12 @@ dom.presetChips.forEach((chip, index) => {
     const from = chip.getAttribute("data-from");
     const to = chip.getAttribute("data-to");
 
-    if (from && to) {
+   if (from && to) {
   dom.fromInput.value = from;
   dom.toInput.value = to;
+
+  dom.fromInput.dispatchEvent(new Event("input", { bubbles: true }));
+  dom.toInput.dispatchEvent(new Event("input", { bubbles: true }));
 
   // Connect each preset to a different exhibition route
   const presetRouteIds = ["route-a", "route-b", "route-c"];
