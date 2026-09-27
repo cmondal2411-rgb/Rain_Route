@@ -349,6 +349,9 @@
         if (from && to) {
           dom.fromInput.value = from;
           dom.toInput.value = to;
+          recalculateAllRoutes();
+          renderRouteComparison();
+          renderMap();
           showToast(`Set route: ${from} → ${to}`);
         }
       });
