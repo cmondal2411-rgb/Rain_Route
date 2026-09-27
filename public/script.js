@@ -347,30 +347,31 @@ dom.presetChips.forEach((chip, index) => {
     const from = chip.getAttribute("data-from");
     const to = chip.getAttribute("data-to");
 
-   if (from && to) {
-  dom.fromInput.value = from;
-  dom.toInput.value = to;
+    if (from && to) {
+      dom.fromInput.value = from;
+      dom.toInput.value = to;
 
-  dom.fromInput.dispatchEvent(new Event("input", { bubbles: true }));
-  dom.toInput.dispatchEvent(new Event("input", { bubbles: true }));
+      dom.fromInput.dispatchEvent(new Event("input", { bubbles: true }));
+      dom.toInput.dispatchEvent(new Event("input", { bubbles: true }));
 
-  // Connect each preset to a different exhibition route
-  cconst presetRouteIds = [
-  state.rainMode ? "route-b" : "route-a",
-  "route-b",
-  "route-c"
-];
+      // Connect each preset to a different exhibition route
+      const presetRouteIds = [
+        state.rainMode ? "route-b" : "route-a",
+        "route-b",
+        "route-c"
+      ];
 
-state.selectedRouteId =
-  presetRouteIds[index] || state.allRoutes[0].id;
+      state.selectedRouteId =
+        presetRouteIds[index] || state.allRoutes[0].id;
 
-  renderRouteComparison();
-  renderMap();
+      renderRouteComparison();
+      renderMap();
 
-  showToast(`Set route: ${from} → ${to}`);
-}
+      showToast(`Set route: ${from} → ${to}`);
+    }
   });
 });
+
 
     // Swap Locations Button
     if (dom.swapLocationsBtn) {
