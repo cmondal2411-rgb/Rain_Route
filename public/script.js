@@ -342,20 +342,30 @@
     }
 
     // Preset Chip Clicking
-    dom.presetChips.forEach(chip => {
-      chip.addEventListener("click", () => {
-        const from = chip.getAttribute("data-from");
-        const to = chip.getAttribute("data-to");
-        if (from && to) {
-          dom.fromInput.value = from;
-          dom.toInput.value = to;
-          recalculateAllRoutes();
-          renderRouteComparison();
-          renderMap();
-          showToast(`Set route: ${from} → ${to}`);
-        }
-      });
-    });
+dom.presetChips.forEach((chip, index) => {
+  chip.addEventListener("click", () => {
+    const from = chip.getAttribute("data-from");
+    const to = chip.getAttribute("data-to");
+
+    if (from && to) {
+      dom.fromInput.value = from;
+      dom.toInput.value = to;
+
+      // Recalculate route costs first
+      recalculateAllRoutes();
+
+      // Connect each preset to a different exhibition route
+      const presetRouteIds = ["route-a", "route-b", "route-c"];
+      state.selectedRouteId =
+        presetRouteIds[index] || state.allRoutes[0].id;
+
+      renderRouteComparison();
+      renderMap();
+
+      showToast(`Set route: ${from} → ${to}`);
+    }
+  });
+});
 
     // Swap Locations Button
     if (dom.swapLocationsBtn) {
