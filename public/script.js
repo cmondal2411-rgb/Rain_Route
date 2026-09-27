@@ -348,22 +348,19 @@ dom.presetChips.forEach((chip, index) => {
     const to = chip.getAttribute("data-to");
 
     if (from && to) {
-      dom.fromInput.value = from;
-      dom.toInput.value = to;
+  dom.fromInput.value = from;
+  dom.toInput.value = to;
 
-      // Recalculate route costs first
-      recalculateAllRoutes();
+  // Connect each preset to a different exhibition route
+  const presetRouteIds = ["route-a", "route-b", "route-c"];
+  state.selectedRouteId =
+    presetRouteIds[index] || state.allRoutes[0].id;
 
-      // Connect each preset to a different exhibition route
-      const presetRouteIds = ["route-a", "route-b", "route-c"];
-      state.selectedRouteId =
-        presetRouteIds[index] || state.allRoutes[0].id;
+  renderRouteComparison();
+  renderMap();
 
-      renderRouteComparison();
-      renderMap();
-
-      showToast(`Set route: ${from} → ${to}`);
-    }
+  showToast(`Set route: ${from} → ${to}`);
+}
   });
 });
 
